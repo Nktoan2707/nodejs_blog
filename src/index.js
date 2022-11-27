@@ -5,6 +5,10 @@ const handlebars = require('express-handlebars');
 const app = express(); // trả về 1 instance của express, dùng để xây dựng app
 const port = 3000; // muốn run website ở port nào
 const route = require('./routes');
+const db = require('./config/db');
+
+//Connect to DB
+db.connect();
 
 app.use(express.static(path.join(__dirname, 'public'))); //mỗi khi truy cập file static, express sẽ kiểm tra các folder được cung cấp (bằng cách truyền vào đây)
 

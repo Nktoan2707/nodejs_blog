@@ -1,7 +1,20 @@
+const Course = require('../models/Course');
+
 class SiteController {
     // [GET] /home, để tên handler là index hay home cũng dc
     index(req, res) {
-        res.render('home');
+        
+        Course.find({}, function(err, courses){
+            if (!err) {
+                res.json(courses);
+                return;
+            }
+            else{
+                res.status(400).json({error: 'ERROR!!!'});
+            }
+        });
+
+        // res.render('home');
     }
 
     // [GET] /search
