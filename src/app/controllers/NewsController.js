@@ -1,14 +1,14 @@
 class NewsController {
-  // [GET] /news
-  index(req, res) {
-    res.render("news");
-  }
+    // [GET] /news
+    index(req, res) {
+        res.render('news');
+    }
 
-  // [GET] /news/:slug: slug là 1 biến động, là 1 param trên url, lúc là path này lúc là path kia
-  show(req, res) {
-    // show chi tiết news
-    res.send("NEWS DETAIL!!!");
-  }
+    // [GET] /news/:slug: slug là 1 biến động, là 1 param trên url, lúc là path này lúc là path kia
+    show(req, res) {
+        // show chi tiết news
+        res.send('NEWS DETAIL!!!');
+    }
 }
 
 // phải có 1 dòng trống r mới tới dòng exports (quy ước thôi)
