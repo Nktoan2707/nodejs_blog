@@ -6,7 +6,7 @@ const router = express.Router();
 const newsController = require('../app/controllers/NewsController');
 
 // router điều hướng path nào match đến HANDLER nào
-router.use('/:slug', newsController.show);
-router.use('/', newsController.index);
+router.get('/:slug', newsController.show);
+router.get('/', newsController.index);
 
 module.exports = router;
