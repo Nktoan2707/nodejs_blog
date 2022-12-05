@@ -1,12 +1,7 @@
 <form class="mt-4" name="container-form" method="POST" action="/courses/handle-form-actions">
-  <div class="row">
-    <div class="col">
-      <h3>Khoá học của tôi</h3>
-      <a href="/me/trash/courses">Thùng rác ({{deletedCount}})</a>
-    </div>
-    <div class="col text-right pt-3 pr-4">
-      <a href="/courses/create">Đăng khoá học</a>
-    </div>
+  <div>
+    <h3>Khoá học đã xoá</h3>
+    <a href="/me/stored/courses">Danh sách khoá học</a>
   </div>
 
   <div class="mt-4 d-flex align-items-center">
@@ -17,14 +12,13 @@
 
     <select class="form-control form-control-sm checkbox-select-all-options" name="action" required="true">
       <option value="">-- Hành động --</option>
-      <option value="delete">Xoá</option>
+      <option value="restore">Khôi phục</option>
+      <option value="force-delete">Xoá vĩnh viễn</option>
     </select>
 
     <button class="btn btn-primary btn-sm check-all-submit-btn" data-toggle="modal" data-target="" disabled>Thực
       hiện</button>
   </div>
-
-
 
   <table class="table mt-4">
     <thead>
@@ -32,7 +26,7 @@
         <th scope="col" colspan="2">#</th>
         <th scope="col">Tên khoá học</th>
         <th scope="col">Trình độ</th>
-        <th scope="col" colspan="3">Thời gian tạo</th>
+        <th scope="col" colspan="3">Thời gian xoá</th>
       </tr>
     </thead>
     <tbody>
@@ -46,20 +40,20 @@
         <th scope="row">{{sum @index 1}}</th>
         <td>{{this.name}}</td>
         <td>{{this.level}}</td>
-        <td>{{this.createdAt}}</td>
+        <td>{{this.deletedAt}}</td>
         <td>
-          <a href="/courses/{{this._id}}/edit" class="btn btn-link">Sửa</a>
+          <a href="" class="btn btn-link btn-restore" data-id="{{this._id}}">Khôi phục</a>
         </td>
         <td>
           <a href="" class="btn btn-link" data-toggle="modal" data-id="{{this._id}}"
-            data-target="#delete-course-modal">Xoá</a>
+            data-target="#delete-course-modal">Xoá vĩnh viễn</a>
         </td>
       </tr>
       {{else}}
       <tr>
         <td colspan="5" class="text-center">
-          Bạn chưa đăng khoá học nào.
-          <a href="/courses/create">Đăng khoá học</a>
+          Thùng rác trống.
+          <a href="/me/stored/courses">Danh sách khoá học</a>
         </td>
       </tr>
       {{/each}}
@@ -67,8 +61,13 @@
   </table>
 </form>
 
-{{!-- hidden delete form --}}
+{{!-- Hidden delete form --}}
 <form name="delete-course-form" method="POST">
+
+</form>
+
+{{!-- Hidden restore form --}}
+<form name="restore-course-form" method="POST">
 
 </form>
 
@@ -78,16 +77,16 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Xoá khoá học?</h5>
+        <h5 class="modal-title">Xoá khoá học vĩnh viễn?</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
-        <p>Bạn chắc chắn muốn xoá khoá học này ?</p>
+        <p>Hành động này không thể khôi phục. Bạn vẫn muốn xoá khoá học này?</p>
       </div>
       <div class="modal-footer">
-        <button id="btn-delete-course" type="button" class="btn btn-danger">Xoá</button>
+        <button id="btn-delete-course" type="button" class="btn btn-danger">Xoá vĩnh viễn</button>
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Huỷ</button>
       </div>
     </div>
@@ -99,16 +98,16 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Xoá khoá học?</h5>
+        <h5 class="modal-title">Xoá khoá học vĩnh viễn?</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
-        <p>Bạn xác nhận muốn xoá những khoá học đã chọn ?</p>
+        <p>Hành động này không thể khôi phục. Bạn vẫn muốn xoá những khoá học đã chọn?</p>
       </div>
       <div class="modal-footer">
-        <button id="btn-delete-courses" type="button" class="btn btn-danger">Xoá</button>
+        <button id="btn-delete-courses" type="button" class="btn btn-danger">Xoá vĩnh viễn</button>
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Huỷ</button>
       </div>
     </div>
@@ -119,15 +118,18 @@
   document.addEventListener('DOMContentLoaded', function () {
     var courseId;
     var btnDeleteCourse = document.getElementById('btn-delete-course');
+    var deleteCourseForm = document.forms['delete-course-form'];
     var btnDeleteCourses = document.getElementById('btn-delete-courses');
+    var restoreCourseForm = document.forms['restore-course-form'];
+    var restoreBtn = $('.btn-restore');
     var confirmSubmit = false;
-    var checkboxSelectAllOptions = $('select.checkbox-select-all-options');
     // var containerForm = document.forms['container-form']; // cách select element bằng JS thuần
     var containerForm = $('form[name="container-form"'); // cách select element bằng dùng Jquery
-    var deleteCourseForm = document.forms['delete-course-form'];
+    var checkboxSelectAllOptions = $('select.checkbox-select-all-options');
     var checkboxAll = $('#checkbox-all');
     var courseItemCheckbox = $('input[name="courseIds[]"]');
     var checkAllSubmitBtn = $('.check-all-submit-btn');
+
 
     //When dialog confirm clicked (tức là chỉ cần bấm nút nào trên cái modal hiện ra thì cũng chạy)
     $('#delete-course-modal').on('show.bs.modal', function (event) {
@@ -137,14 +139,23 @@
 
     // xử lý khi bấm nút confirm delete -> xử lý form action dựa vào id đã có ở trên rồi submit luôn
     btnDeleteCourse.onclick = function () {
-      deleteCourseForm.action = '/courses/' + courseId + '?_method=DELETE';
+      deleteCourseForm.action = '/courses/' + courseId + '/force?_method=DELETE';
       deleteCourseForm.submit();
     }
+
+    // Restore btn clicked
+    restoreBtn.click(function (e) {
+      e.preventDefault(); // ngăn thẻ a đổi hướng
+
+      var courseId = $(this).data('id');
+      restoreCourseForm.action = '/courses/' + courseId + '/restore?_method=PATCH';
+      restoreCourseForm.submit();
+    });
 
     // when checkboxSelectAllOptions change
     checkboxSelectAllOptions.change(function (event) {
       var option = $(this).val();
-      if (option == "delete") {
+      if (option == "force-delete") {
         checkAllSubmitBtn.attr('data-target', "#delete-courses-modal");
       }
       else {
@@ -154,7 +165,7 @@
 
     //when delete courses form is submitted
     containerForm.on('submit', function (e) {
-      if (!confirmSubmit && checkboxSelectAllOptions.val() == "delete") {
+      if (!confirmSubmit && checkboxSelectAllOptions.val() == "force-delete") {
         e.preventDefault();
       }
     });
@@ -163,6 +174,7 @@
       confirmSubmit = true;
       containerForm.submit();
     }
+
 
     //checkbox all changed
     checkboxAll.change(function () {
@@ -188,5 +200,4 @@
       }
     }
   });
-
 </script>

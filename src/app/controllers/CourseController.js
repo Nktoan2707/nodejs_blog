@@ -1,54 +1,99 @@
-const Course = require("../models/Course"); // ghi hoa để ám chỉ model dùng để get dữ liệu từ DB,
+const Course = require('../models/Course'); // ghi hoa để ám chỉ model dùng để get dữ liệu từ DB,
 //ghi thường courses là list course lấy về được, course là course lấy về được
-const { mongooseToObject } = require("../../util/mongoose");
-const { response } = require("express");
+const { mongooseToObject } = require('../../util/mongoose');
+const { response } = require('express');
 
 class CourseController {
-  // [GET] /courses/:slug
-  show(req, res, next) {
-    Course.findOne({ slug: req.params.slug })
-      .then((course) => {
-        // có nhiều param return về thì phải bao lại (course, param2...) => {}
-        res.render("courses/show", { course: mongooseToObject(course) });
-      })
-      .catch(next);
-  }
+	// [GET] /courses/:slug
+	show(req, res, next) {
+		Course.findOne({ slug: req.params.slug })
+			.then((course) => {
+				// có nhiều param return về thì phải bao lại (course, param2...) => {}
+				res.render('courses/show', {
+					course: mongooseToObject(course),
+				});
+			})
+			.catch(next);
+	}
 
-  // [GET] /courses/create
-  create(req, res, next) {
-    res.render("courses/create");
-  }
+	// [GET] /courses/create
+	create(req, res, next) {
+		res.render('courses/create');
+	}
 
-  // [POST] /courses/store
-  store(req, res, next) {
-    const formData = req.body;
-    formData.image = `https://img.youtube.com/vi/${req.body.videoId}/sddefault.jpg`;
-    const course = new Course(formData);
-    course
-      .save()
-      .then(() => {
-        res.redirect("/");
-      })
-      .catch((error) => {});
-  }
+	// [POST] /courses/store
+	store(req, res, next) {
+		req.body.image = `https://img.youtube.com/vi/${req.body.videoId}/sddefault.jpg`;
+		const course = new Course(req.body);
+		course
+			.save()
+			.then(() => {
+				res.redirect('/me/stored/courses');
+			})
+			.catch((error) => {});
+	}
 
-  // [GET] /courses/:id/create
-  edit(req, res, next) {
-    Course.findById(req.params.id).then((course) =>
-      res.render("courses/edit", {
-        course: mongooseToObject(course),
-      })
-    );
-  }
+	// [GET] /courses/:id/edit
+	edit(req, res, next) {
+		Course.findById(req.params.id).then((course) =>
+			res.render('courses/edit', {
+				course: mongooseToObject(course),
+			}),
+		);
+	}
 
-  // [PUT] /course/:id
-  update(req, res, next) {
-    Course.updateOne({ _id: req.params.id }, req.body)
-    .then(() => {
-      res.redirect('/me/stored/courses');
-    })
-    .catch(next);
-  }
+	// [PUT] /course/:id
+	update(req, res, next) {
+		Course.updateOne({ _id: req.params.id }, req.body)
+			.then(() => {
+				res.redirect('/me/stored/courses');
+			})
+			.catch(next);
+	}
+
+	// [DELETE] /course/:id
+	destroy(req, res, next) {
+		Course.delete({ _id: req.params.id })
+			.then(() => res.redirect('back'))
+			.catch(next);
+	}
+
+	// [DELETE] /course/:id/force
+	forceDestroy(req, res, next) {
+		Course.deleteOne({ _id: req.params.id })
+			.then(() => res.redirect('back'))
+			.catch(next);
+	}
+
+	//[PATCH] /courses/:id/restore
+	restore(req, res, next) {
+		Course.restore({ _id: req.params.id })
+			.then(() => res.redirect('back'))
+			.catch(next);
+	}
+
+	//[POST] /courses/handle-form-actions
+	handleFormActions(req, res, next) {
+		switch (req.body.action) {
+			case 'delete':
+				Course.delete({ _id: { $in: req.body.courseIds } })
+					.then(() => res.redirect('back'))
+					.catch(next);
+				break;
+			case 'restore':
+				Course.restore({ _id: { $in: req.body.courseIds } })
+					.then(() => res.redirect('back'))
+					.catch(next);
+				break;
+			case 'force-delete':
+				Course.deleteOne({ _id: { $in: req.body.courseIds } })
+					.then(() => res.redirect('back'))
+					.catch(next);
+				break;
+			default:
+				res.json({ message: 'Action is invalid!' });
+		}
+	}
 }
 
 module.exports = new CourseController();

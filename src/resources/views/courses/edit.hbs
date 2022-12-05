@@ -3,13 +3,7 @@
   <form method="POST" action="/courses/{{course._id}}?_method=PUT">
     <div class="form-group">
       <label for="name">Tên khoá học</label>
-      <input
-        type="text"
-        class="form-control"
-        value="{{course.name}}"
-        id="name"
-        name="name"
-      />
+      <input type="text" class="form-control" value="{{course.name}}" id="name" name="name" />
     </div>
 
     <div class="form-group">
@@ -21,24 +15,12 @@
 
     <div class="form-group">
       <label for="videoId">Video ID</label>
-      <input
-        type="text"
-        class="form-control"
-        value="{{course.videoId}}"
-        id="videoId"
-        name="videoId"
-      />
+      <input type="text" class="form-control" value="{{course.videoId}}" id="videoId" name="videoId" />
     </div>
 
     <div class="form-group">
       <label for="level">Trình độ</label>
-      <input
-        type="text"
-        class="form-control"
-        value="{{course.level}}"
-        id="level"
-        name="level"
-      />
+      <input type="text" class="form-control" value="{{course.level}}" id="level" name="level" />
     </div>
 
     <button type="submit" class="mt-3 btn btn-primary">Lưu lại</button>
