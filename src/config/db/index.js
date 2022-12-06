@@ -6,9 +6,9 @@ async function connect() {
 			useNewUrlParser: true,
 			useUnifiedTopology: true,
 		});
-		console.log('Connect successfully!!!');
+		console.log('Connecting to MongoDB succeeded.');
 	} catch (error) {
-		console.log('Connect failed.');
+		console.log('Connecting to MongoDB failed.');
 	}
 }
 

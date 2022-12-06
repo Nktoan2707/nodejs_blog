@@ -4,6 +4,8 @@ const morgan = require('morgan');
 const methodOverride = require('method-override');
 const handlebars = require('express-handlebars');
 
+const sortMiddleware = require('./app/middlewares/SortMiddleware');
+
 const route = require('./routes');
 const db = require('./config/db');
 
@@ -16,26 +18,50 @@ const port = 3000; // muốn run website ở port nào
 app.use(express.static(path.join(__dirname, 'public'))); //mỗi khi truy cập file static, express sẽ kiểm tra các folder được cung cấp (bằng cách truyền vào đây)
 
 app.use(
-    express.urlencoded({
-        extended: true, //bỏ vào object có thuộc tính yêu cầu từ warning: body-parser deprecated undefined extended: provide extended option src\index.js:11:17
-    }),
-); //middleware để xử lý từ form submit dùng method post (form data)
+	express.urlencoded({
+		extended: true, //bỏ vào object có thuộc tính yêu cầu từ warning: body-parser deprecated undefined extended: provide extended option src\index.js:11:17
+	}),
+); //middleware để xử lý từ form submit dùng method post (form data) -> configd cho req.body
 app.use(express.json()); //trường hợp các library js như XHLHttpRequest, fetch, axios,... sử dụng method get, post để gửi data thay vì form submit
 app.use(methodOverride('_method'));
+
+//Custom middlewares
+app.use(sortMiddleware);
 
 //HTTP logger
 app.use(morgan('combined'));
 
 //Template engine
 app.engine(
-    'hbs',
-    handlebars.engine({
-        // app này sẽ dùng engine là gì, ném engine thư viện đó vào
-        extname: '.hbs', // truyền config vào, ở đây là đổi đuôi .handlebars thành .hbs
-        helpers: {
-            sum: (a, b) => a + b,
-        }
-    }),
+	'hbs',
+	handlebars.engine({
+		// app này sẽ dùng engine là gì, ném engine thư viện đó vào
+		extname: '.hbs', // truyền config vào, ở đây là đổi đuôi .handlebars thành .hbs
+		helpers: {
+			sum: (a, b) => a + b,
+			sortable: (field, sort) => {
+				const sortType = field === sort.column ? sort.type : 'default';
+				const icons = {
+					default: 'oi oi-elevator',
+					asc: 'oi oi-sort-ascending',
+					desc: 'oi oi-sort-descending',
+				};
+
+				const types = {
+					default: 'desc',
+					asc: 'desc',
+					desc: 'asc',
+				};
+
+				const icon = icons[sortType];
+				const type = types[sortType];
+
+				return `<a href='?_sort&column=${field}&type=${type}'>
+					<span class='${icon}'></span>
+				</a>`;
+			},
+		},
+	}),
 );
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'resources', 'views')); // set lại path của thư mục views
@@ -46,8 +72,8 @@ route(app); // để việc config routes qua folder routes làm
 // 127.0.0.1 = local host
 // localhost:3000 -> 127.0.0.1:3000 : địa chỉ ip local chạy ở portal 3000
 app.listen(port, () => {
-    //arrow function app sẽ listen trên port khai báo ở trên
-    console.log(`App listening on port ${port}`);
+	//arrow function app sẽ listen trên port khai báo ở trên
+	console.log(`App listening on port ${port}`);
 });
 
 //=> file index.js này là entry point: khi mà user truy cập vào web này, những code trong đây sẽ được chạy (khởi tạo biến app là instance của express, muốn chạy trên port nào
